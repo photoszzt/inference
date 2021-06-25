@@ -27,6 +27,8 @@
 from setuptools import Extension
 from setuptools import setup
 from version_generator import generate_loadgen_version_definitions
+import site
+import os
 
 generated_version_source_filename = "generated/version_generated.cc"
 generate_loadgen_version_definitions(generated_version_source_filename, ".")
@@ -68,7 +70,7 @@ mlperf_loadgen_sources = (mlperf_loadgen_sources_no_gen +
 mlperf_loadgen_module = Extension(
         "mlperf_loadgen",
         define_macros=[("MAJOR_VERSION", "1"), ("MINOR_VERSION", "1")],
-        include_dirs=[".", "../third_party/pybind/include"],
+        include_dirs=[".", "../third_party/pybind/include", os.path.join(site.USER_SITE, "pybind11", "include")],
         sources=mlperf_loadgen_sources,
         depends=mlperf_loadgen_headers)
 
