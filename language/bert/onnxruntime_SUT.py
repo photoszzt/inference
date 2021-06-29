@@ -23,7 +23,6 @@ sys.path.insert(0, os.getcwd())
 import mlperf_loadgen as lg
 import numpy as np
 import onnxruntime
-from transformers import BertConfig, BertForQuestionAnswering
 from squad_QSL import get_squad_QSL
 
 class BERT_ONNXRuntime_SUT():
