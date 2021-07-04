@@ -30,6 +30,7 @@ class BackendOnnxruntime(backend.Backend):
         sess_options.execution_mode = rt.ExecutionMode.ORT_SEQUENTIAL
         sess_options.graph_optimization_level = rt.GraphOptimizationLevel.ORT_ENABLE_ALL
         sess_options.intra_op_num_threads = 1
+        sess_options.inter_op_num_threads = 1
         self.sess = rt.InferenceSession(model_path, sess_options)
         # get input and output names
         if not inputs:
