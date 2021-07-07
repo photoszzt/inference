@@ -23,6 +23,11 @@ import argparse
 import mlperf_loadgen as lg
 import subprocess
 
+# pylint: disable=missing-docstring
+
+NANO_SEC = 1e9
+MILLI_SEC = 1000
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -34,6 +39,12 @@ def get_args():
     parser.add_argument("--mlperf_conf", default="build/mlperf.conf", help="mlperf rules config")
     parser.add_argument("--user_conf", default="user.conf", help="user config for user LoadGen settings such as target QPS")
     parser.add_argument("--max_examples", type=int, help="Maximum number of examples to consider (not limited by default)")
+    parser.add_argument("--batchsize", type=int, help="maximum batch size")
+    parser.add_argument("--output", default="output", help="test results")
+    parser.add_argument("--qps", type=int, help="target qps")
+
+    # below will override mlperf rules compliant settings - don't use for official submission
+    parser.add_argument("--time", type=int, help="time to scan in seconds")
     args = parser.parse_args()
     return args
 
@@ -46,7 +57,6 @@ scenario_map = {
 
 def main():
     args = get_args()
-
     if args.backend == "pytorch":
         assert not args.quantized, "Quantized model is only supported by onnxruntime backend!"
         assert not args.profile, "Profiling is only supported by onnxruntime backend!"
@@ -78,11 +88,24 @@ def main():
     else:
         settings.mode = lg.TestMode.PerformanceOnly
 
-    log_path = "build/logs"
-    if not os.path.exists(log_path):
-        os.makedirs(log_path)
+    if args.time:
+        # override the time we want to run
+        settings.min_duration_ms = args.time * MILLI_SEC
+        settings.max_duration_ms = args.time * MILLI_SEC
+
+    if args.output:
+        output_dir = os.path.abspath(args.output)
+        os.makedirs(output_dir, exist_ok=True)
+    else:
+        output_dir = "build/logs"
+
+    if args.qps:
+        qps = float(args.qps)
+        settings.server_target_qps = qps
+        settings.offline_expected_qps = qps
+
     log_output_settings = lg.LogOutputSettings()
-    log_output_settings.outdir = log_path
+    log_output_settings.outdir = output_dir
     log_output_settings.copy_summary_to_stdout = True
     log_settings = lg.LogSettings()
     log_settings.log_output = log_output_settings
