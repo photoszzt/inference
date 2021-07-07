@@ -45,6 +45,7 @@ def get_args():
 
     # below will override mlperf rules compliant settings - don't use for official submission
     parser.add_argument("--time", type=int, help="time to scan in seconds")
+    parser.add_argument("--count", type=int, help="dataset items to use")
     args = parser.parse_args()
     return args
 
@@ -78,6 +79,11 @@ def main():
     else:
         raise ValueError("Unknown backend: {:}".format(args.backend))
 
+    count_override = False
+    count = args.count
+    if count:
+        count_override = True
+
     settings = lg.TestSettings()
     settings.scenario = scenario_map[args.scenario]
     settings.FromConfig(args.mlperf_conf, "bert", args.scenario)
@@ -103,6 +109,10 @@ def main():
         qps = float(args.qps)
         settings.server_target_qps = qps
         settings.offline_expected_qps = qps
+
+    if count_override:
+        settings.min_query_count = count
+        settings.max_query_count = count
 
     log_output_settings = lg.LogOutputSettings()
     log_output_settings.outdir = output_dir
