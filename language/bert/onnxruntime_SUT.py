@@ -24,6 +24,7 @@ import numpy as np
 import onnxruntime
 from squad_QSL import get_squad_QSL
 
+
 class BERT_ONNXRuntime_SUT():
     def __init__(self, args):
         self.profile = args.profile
@@ -101,7 +102,7 @@ class BERT_ONNXRuntime_SUT():
             idx = base_index + i
             response_array = array.array("B", np.array(o).tobytes())
             bi = response_array.buffer_info()
-            response = lg.QuerySampleResponse(query_samples[i].id, bi[0], bi[1])
+            response = lg.QuerySampleResponse(query_samples[idx].id, bi[0], bi[1])
             lg.QuerySamplesComplete([response])
 
     def issue_queries(self, query_samples):
@@ -129,6 +130,7 @@ class BERT_ONNXRuntime_SUT():
         if self.profile:
             print("ONNX runtime profile dumped to: '{}'".format(self.sess.end_profiling()))
         print("Finished destroying SUT.")
+
 
 def get_onnxruntime_sut(args):
     return BERT_ONNXRuntime_SUT(args)
