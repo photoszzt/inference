@@ -46,13 +46,13 @@ class Conv2d_tf(nn.Conv2d):
         super(Conv2d_tf, self).__init__(*args, **kwargs)
         self.padding = kwargs.get("padding", "SAME")
 
-    def _compute_padding(self, input, dim):
+    def _compute_padding(self, input, dim: int):
         input_size = input.size(dim + 2)
         filter_size = self.weight.size(dim + 2)
-        effective_filter_size = (filter_size - 1) * self.dilation[dim] + 1
-        out_size = (input_size + self.stride[dim] - 1) // self.stride[dim]
+        effective_filter_size = (filter_size - 1) * self.dilation[int(dim)] + 1
+        out_size = (input_size + self.stride[int(dim)] - 1) // self.stride[int(dim)]
         total_padding = max(
-            0, (out_size - 1) * self.stride[dim] + effective_filter_size - input_size
+            0, (out_size - 1) * self.stride[int(dim)] + effective_filter_size - input_size
         )
         additional_padding = int(total_padding % 2 != 0)
 
@@ -151,7 +151,7 @@ def decode_boxes(rel_codes, boxes, weights):
     # type: (torch.Tensor, torch.Tensor, torch.Tensor) -> torch.Tensor
 
     # perform some unpacking to make it JIT-fusion friendly
-    
+
     #rel_codes=rel_codes[0][None]
     wx = weights[1]
     wy = weights[0]
