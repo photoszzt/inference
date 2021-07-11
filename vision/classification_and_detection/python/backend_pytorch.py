@@ -20,6 +20,8 @@ class BackendPytorch(backend.Backend):
         self.sess = None
         self.model = None
         self.lock = Lock()
+        torch.set_num_interop_threads(1)
+        torch.set_num_threads(1)
 
     def version(self):
         return torch.__version__
