@@ -23,13 +23,25 @@ sys.path.insert(0, os.getcwd())
 import mlperf_loadgen as lg
 import numpy as np
 import tensorflow as tf
+import os
 from tensorflow.python.platform import gfile
 from squad_QSL import get_squad_QSL
 
 class BERT_TF_SUT():
     def __init__(self, args):
         print("Loading TF model...")
-        self.sess = tf.compat.v1.Session()
+        infer_config = tf.compat.v1.ConfigProto()
+        infer_config.intra_op_parallelism_threads = int(os.environ['TF_INTRA_OP_PARALLELISM_THREADS']) \
+                if 'TF_INTRA_OP_PARALLELISM_THREADS' in os.environ else os.cpu_count()
+        print("intra op threads: {}".format(infer_config.intra_op_parallelism_threads))
+        infer_config.inter_op_parallelism_threads = int(os.environ['TF_INTER_OP_PARALLELISM_THREADS']) \
+                if 'TF_INTER_OP_PARALLELISM_THREADS' in os.environ else os.cpu_count()
+        print("inter op threads: {}".format(infer_config.inter_op_parallelism_threads))
+        infer_config.use_per_session_threads = 1
+        infer_config.gpu_options.allow_growth = True
+        self.batchsize = args.batchsize
+
+        self.sess = tf.compat.v1.Session(config=infer_config)
         with gfile.FastGFile('build/data/bert_tf_v1_1_large_fp32_384_v2/model.pb', 'rb') as f:
             graph_def = tf.compat.v1.GraphDef()
             graph_def.ParseFromString(f.read())
@@ -42,7 +54,7 @@ class BERT_TF_SUT():
 
         self.qsl = get_squad_QSL(args.max_examples)
 
-    def issue_queries(self, query_samples):
+    def run_with_each_sample(self, query_samples):
         for i in range(len(query_samples)):
             eval_features = self.qsl.get_features(query_samples[i].index)
             input_ids   = np.array([eval_features.input_ids])
@@ -60,6 +72,46 @@ class BERT_TF_SUT():
             bi = response_array.buffer_info()
             response = lg.QuerySampleResponse(query_samples[i].id, bi[0], bi[1])
             lg.QuerySamplesComplete([response])
+
+    def run_one_batch(self, query_samples, cur_batch_size=1, base_index=0):
+        input_ids_list = []
+        input_mask_list = []
+        segment_ids_list = []
+        for i in range(cur_batch_size):
+            idx = base_index + i
+            eval_features = self.qsl.get_features(query_samples[idx].index)
+            input_ids_list.append(eval_features.input_ids)
+            input_mask_list.append(eval_features.input_mask)
+            segment_ids_list.append(eval_features.segment_ids)
+        feeds = {
+            'input_ids:0': np.array(input_ids_list),
+            'input_mask:0': np.array(input_mask_list),
+            'segment_ids:0': np.array(segment_ids_list),
+        }
+        results = self.sess.run(["logits:0"], feed_dict=feeds)
+        output = np.stack(results, axis=-1)
+        out_list = np.split(output, cur_batch_size, axis = 0)
+        for i, o in enumerate(out_list):
+            idx = base_index + i
+            response_array = array.array("B", np.array(o).astype(np.float32).tobytes())
+            bi = response_array.buffer_info()
+            response = lg.QuerySampleResponse(query_samples[idx].id, bi[0], bi[1])
+            lg.QuerySamplesComplete([response])
+
+    def issue_queries(self, query_samples):
+        if self.batchsize > 1:
+            num_samples = len(query_samples)
+            num_batch = num_samples // self.batchsize
+            remaining_batch = num_samples % self.batchsize
+            for b in range(num_batch):
+                base_index = b * self.batchsize
+                self.run_one_batch(query_samples, self.batchsize, base_index)
+
+            if remaining_batch > 0:
+                base_index = num_batch * self.batchsize
+                self.run_one_batch(query_samples, remaining_batch, base_index)
+        else:
+            self.run_with_each_sample(query_samples)
 
     def flush_queries(self):
         pass
