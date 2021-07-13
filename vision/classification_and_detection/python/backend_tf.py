@@ -41,6 +41,7 @@ class BackendTensorflow(backend.Backend):
         infer_config.inter_op_parallelism_threads = int(os.environ['TF_INTER_OP_PARALLELISM_THREADS']) \
                 if 'TF_INTER_OP_PARALLELISM_THREADS' in os.environ else os.cpu_count()
         infer_config.use_per_session_threads = 1
+        infer_config.gpu_options.allow_growth = True
 
         # TODO: support checkpoint and saved_model formats?
         graph_def = tf.compat.v1.GraphDef()
