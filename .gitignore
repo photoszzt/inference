@@ -2,3 +2,5 @@ loadgen/build/
 libmlperf_loadgen.a
 __pycache__/
 generated/
+loadgen/mlperf_loadgen.cpython-36m-x86_64-linux-gnu.so
+loadgen/mlperf_loadgen.egg-info/
