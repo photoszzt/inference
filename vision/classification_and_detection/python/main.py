@@ -112,11 +112,18 @@ SUPPORTED_PROFILES = {
         "backend": "tensorflow",
         "model-name": "ssd-mobilenet",
     },
-    "ssd-mobilenet-pytorch": {
+    "ssd-mobilenet-pytorch-native": {
         "inputs": "image",
         "outputs": "bboxes,labels,scores",
         "dataset": "coco-300-pt",
         "backend": "pytorch-native",
+        "model-name": "ssd-mobilenet",
+    },
+    "ssd-mobilenet-pytorch": {
+        "dataset": "coco-300",
+        "outputs": "num_detections:0,detection_boxes:0,detection_scores:0,detection_classes:0",
+        "backend": "pytorch",
+        "data-format": "NHWC",
         "model-name": "ssd-mobilenet",
     },
     "ssd-mobilenet-onnxruntime": {
@@ -545,6 +552,7 @@ def main():
     runner.finish()
     lg.DestroyQSL(qsl)
     lg.DestroySUT(sut)
+    del backend
 
     #
     # write final results
