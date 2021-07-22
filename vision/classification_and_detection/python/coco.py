@@ -38,7 +38,7 @@ class Coco(dataset.Dataset):
         self.cache_dir = os.path.join(cache_dir, "preprocessed", name, image_format)
         # input images are in HWC
         self.need_transpose = True if image_format == "NCHW" else False
-        not_found = 0 
+        not_found = 0
         empty_80catageories = 0
         if image_list is None:
             # by default look for val_map.txt
@@ -74,17 +74,17 @@ class Coco(dataset.Dataset):
         for image_id, img in images.items():
             image_name = os.path.join("val2017", img["file_name"])
             src = os.path.join(data_path, image_name)
-            if not os.path.exists(src):
+            dst = os.path.join(self.cache_dir, image_name)
+            if not os.path.exists(src) and not os.path.exists(dst):
                 # if the image does not exists ignore it
                 not_found += 1
                 continue
-            if len(img["category"])==0 and self.use_label_map: 
-                #if an image doesn't have any of the 81 categories in it    
+            if len(img["category"])==0 and self.use_label_map:
+                #if an image doesn't have any of the 81 categories in it
                 empty_80catageories += 1 #should be 48 images - thus the validation sert has 4952 images
-                continue 
+                continue
 
             os.makedirs(os.path.dirname(os.path.join(self.cache_dir, image_name)), exist_ok=True)
-            dst = os.path.join(self.cache_dir, image_name)
             if not os.path.exists(dst + ".npy"):
                 # cache a preprocessed version of the image
                 img_org = cv2.imread(src)
@@ -236,7 +236,7 @@ class PostProcessCocoPt(PostProcessCoco):
         super().__init__()
         self.use_inv_map = use_inv_map
         self.score_threshold = score_threshold
-        
+
     def __call__(self, results, ids, expected=None, result_dict=None):
         # results come as:
         #   detection_boxes,detection_classes,detection_scores

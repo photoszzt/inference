@@ -51,12 +51,12 @@ class Imagenet(dataset.Dataset):
             for s in f:
                 image_name, label = re.split(r"\s+", s.strip())
                 src = os.path.join(data_path, image_name)
-                if not os.path.exists(src):
+                dst = os.path.join(self.cache_dir, image_name)
+                if not os.path.exists(src) and not os.path.exists(dst + ".npy"):
                     # if the image does not exists ignore it
                     not_found += 1
                     continue
                 os.makedirs(os.path.dirname(os.path.join(self.cache_dir, image_name)), exist_ok=True)
-                dst = os.path.join(self.cache_dir, image_name)
                 if not os.path.exists(dst + ".npy"):
                     # cache a preprocessed version of the image
                     # TODO: make this multi threaded ?
@@ -92,4 +92,3 @@ class Imagenet(dataset.Dataset):
     def get_item_loc(self, nr):
         src = os.path.join(self.data_path, self.image_list[nr])
         return src
-

@@ -2,7 +2,6 @@ import time
 import dataset
 import imagenet
 import coco
-import mlperf_loadgen as lg
 from dataclasses import dataclass
 
 # pylint: disable=missing-docstring
@@ -149,14 +148,6 @@ SUPPORTED_PROFILES = {
 }
 
 
-SCENARIO_MAP = {
-    "SingleStream": lg.TestScenario.SingleStream,
-    "MultiStream": lg.TestScenario.MultiStream,
-    "Server": lg.TestScenario.Server,
-    "Offline": lg.TestScenario.Offline,
-}
-
-
 def get_backend(backend):
     if backend == "tensorflow":
         from backend_tf import BackendTensorflow
@@ -179,6 +170,44 @@ def get_backend(backend):
     else:
         raise ValueError("unknown backend: " + backend)
     return backend
+
+
+def get_profile_and_model_path(profile_name: str):
+    if profile_name == "resnet50-tf":
+        return SUPPORTED_PROFILES[profile_name], "/models/resnet50_v1.pb"
+    elif profile_name == "ssd-mobilenet-tf":
+        return SUPPORTED_PROFILES[profile_name], "/models/ssd_mobilenet_v1_coco_2018_01_28.pb"
+    elif profile_name == "ssd-resnet34-tf":
+        return SUPPORTED_PROFILES[profile_name], "/models/resnet34_tf.22.1.pb"
+    elif profile_name == "resnet50-onnxruntime":
+        return SUPPORTED_PROFILES[profile_name], "/models/resnet50_v1.onnx"
+    elif profile_name == "ssd-mobilenet-onnxruntime":
+        return SUPPORTED_PROFILES[profile_name], "/models/updated_ssd_mobilenet_v1_coco_2018_01_28.onnx"
+    elif profile_name == "ssd-resnet34-onnxruntime":
+        return SUPPORTED_PROFILES[profile_name], "/models/updated_resnet34-ssd1200.onnx"
+    elif profile_name == "resnet50-pytorch":
+        profile = SUPPORTED_PROFILES["resnet50-onnxruntime"]
+        profile['backend'] = "pytorch"
+        return profile, "/models/resnet50_v1.onnx"
+    elif profile_name == "ssd-mobilenet-pytorch":
+        return SUPPORTED_PROFILES[profile_name], "/models/updated_ssd_mobilenet_v1_coco_2018_01_28.onnx"
+    elif profile_name == "ssd-mobilenet-pytorch-native":
+        return SUPPORTED_PROFILES[profile_name], "/models/ssd_mobilenet_v1.pytorch"
+    elif profile_name == "ssd-resnet34-pytorch":
+        return SUPPORTED_PROFILES[profile_name], "/models/resnet34-ssd1200.pytorch"
+    else:
+        raise Exception("Unsupported profile: {}".format(profile_name))
+
+
+def get_img_format(backend_name: str):
+    if backend_name == "onnxruntime":
+        return "NCHW"
+    elif backend_name == "tensorflow":
+        return "NHWC"
+    elif backend_name == "pytorch":
+        return "NCHW"
+    else:
+        raise Exception("Unsupported backend: {}".format(backend_name))
 
 
 @dataclass

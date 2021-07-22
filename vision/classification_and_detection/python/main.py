@@ -19,7 +19,7 @@ from queue import Queue
 import mlperf_loadgen as lg
 import numpy as np
 
-from settings import SUPPORTED_DATASETS, SUPPORTED_PROFILES, SCENARIO_MAP, \
+from settings import SUPPORTED_DATASETS, SUPPORTED_PROFILES, \
     get_backend, Item
 
 logging.basicConfig(level=logging.INFO)
@@ -32,6 +32,14 @@ MILLI_SEC = 1000
 
 
 last_timeing = []
+
+
+SCENARIO_MAP = {
+    "SingleStream": lg.TestScenario.SingleStream,
+    "MultiStream": lg.TestScenario.MultiStream,
+    "Server": lg.TestScenario.Server,
+    "Offline": lg.TestScenario.Offline,
+}
 
 
 def get_args():
