@@ -105,11 +105,11 @@ class Runner:
     def issue_one_item(self, query_input):
         json_input = json.dumps(query_input)
         ret = requests.post(self.url, data=json_input, verify=False)
-        print(ret)
         if ret.status_code == requests.codes.ok:
             ret = ret.json()
-            print(ret)
-            print(ret['res'])
+            if ret:
+                response = [lg.QuerySampleResponse(r[0], r[1], r[2]) for r in ret['res']]
+                lg.QuerySamplesComplete(response)
 
     def issue_queries(self, query_samples):
         queries = [{'idx': q.index, 'id': q.id} for q in query_samples]
