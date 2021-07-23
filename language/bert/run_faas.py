@@ -16,7 +16,7 @@ MILLI_SEC = 1000
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--backend", choices=["tf","pytorch","onnxruntime","tf_estimator"], default="tf", help="Backend")
+    # parser.add_argument("--backend", choices=["tf","pytorch","onnxruntime","tf_estimator"], default="tf", help="Backend")
     parser.add_argument("--scenario", choices=["SingleStream", "Offline", "Server", "MultiStream"], default="Offline", help="Scenario")
     parser.add_argument("--accuracy", action="store_true", help="enable accuracy pass")
     parser.add_argument("--quantized", action="store_true", help="use quantized model (only valid for onnxruntime backend)")
@@ -28,6 +28,7 @@ def get_args():
     parser.add_argument("--output", default="output", help="test results")
     parser.add_argument("--qps", type=int, help="target qps")
     parser.add_argument("--url", default="http://127.0.0.1:8080", help="gateway url")
+    parser.add_argument("--split", action="store_true", help="whether to split the queries")
 
     # below will override mlperf rules compliant settings - don't use for official submission
     parser.add_argument("--time", type=int, help="time to scan in seconds")
@@ -48,7 +49,7 @@ class Runner:
         self.url = url
         self.batchsize = batchsize
         self.split = split
-    
+
     def issue_one_item(self, query_input):
         json_input = json.dumps(query_input)
         ret = requests.post(self.url, data=json_input, verify=False)
