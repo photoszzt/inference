@@ -39,9 +39,9 @@ class BERT_ONNXRuntime_SUT():
         print("Loading ONNX model...")
         self.quantized = args.quantized
         if self.quantized:
-            model_path = "build/data/bert_tf_v1_1_large_fp32_384_v2/model_with_external_data/bert_large_v1_1_fake_quant.onnx"
+            model_path = "build/data/bert_tf_v1_1_large_fp32_384_v2/bert_large_v1_1_fake_quant.onnx"
         else:
-            model_path = "build/data/bert_tf_v1_1_large_fp32_384_v2/model_with_external_data/model.onnx"
+            model_path = "build/data/bert_tf_v1_1_large_fp32_384_v2/model.onnx"
         print("using model {}".format(model_path))
         self.sess = onnxruntime.InferenceSession(model_path, self.options)
 
