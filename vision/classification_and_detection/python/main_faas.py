@@ -13,6 +13,7 @@ import logging
 import os
 import sys
 import time
+from timeit import default_timer as timer
 import requests
 
 import mlperf_loadgen as lg
@@ -200,7 +201,10 @@ def main():
     runner = Runner(full_url, args.max_batchsize, args.split)
 
     def issue_queries(query_samples):
+        start = timer()
         runner.issue_queries(query_samples)
+        end = timer()
+        print(f"sample/s: {len(query_samples)/(end-start)}")
 
     log_output_settings = lg.LogOutputSettings()
     log_output_settings.outdir = output_dir
