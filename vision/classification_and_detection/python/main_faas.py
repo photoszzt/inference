@@ -111,29 +111,32 @@ class Runner:
             if ret:
                 response = [lg.QuerySampleResponse(r[0], r[1], r[2]) for r in ret['res']]
                 lg.QuerySamplesComplete(response)
+                return ret['ml'], ret['dl'], ret['inf']
+        return None, None, None
 
     def issue_queries(self, query_samples):
         queries = [{'idx': q.index, 'id': q.id} for q in query_samples]
-        if not self.split:
+        if not self.split or (len(query_samples) < self.max_batchsize and self.split):
             input = {
                 'qs': queries,
                 'batch_size': self.max_batchsize,
             }
-            self.issue_one_item(input)
+            ml, dl, inf = self.issue_one_item(input)
+            return ml, dl, inf
         else:
-            if len(query_samples) < self.max_batchsize:
-                input = {
-                    'qs': queries,
+            ml_t = 0
+            dl_t = 0
+            inf_t = 0
+            for i in range(0, len(query_samples), self.max_batchsize):
+                sub_qs = queries[i:i+self.max_batchsize]
+                ml, dl, inf = self.issue_one_item({
+                    'qs': sub_qs,
                     'batch_size': self.max_batchsize,
-                }
-                self.issue_one_item(input)
-            else:
-                for i in range(0, len(query_samples), self.max_batchsize):
-                    sub_qs = queries[i:i+self.max_batchsize]
-                    self.issue_one_item({
-                        'qs': sub_qs,
-                        'batch_size': self.max_batchsize,
-                    })
+                })
+                ml_t += float(ml)
+                dl_t += float(dl)
+                inf_t += float(inf)
+            return ml_t, dl_t, inf_t
 
 
 def flush_queries():
@@ -202,9 +205,14 @@ def main():
 
     def issue_queries(query_samples):
         start = timer()
-        runner.issue_queries(query_samples)
+        ml, dl, inf = runner.issue_queries(query_samples)
         end = timer()
+        print(f"Time: {end-start} s")
+        print(f"model loading: {ml}")
+        print(f"data loading: {dl}")
+        print(f"inf: {inf}")
         print(f"sample/s: {len(query_samples)/(end-start)}")
+        print(f"sample/s using inf: {len(query_samples)/inf}")
 
     log_output_settings = lg.LogOutputSettings()
     log_output_settings.outdir = output_dir
